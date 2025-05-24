@@ -1,0 +1,22 @@
+{
+  "name": "vetklinik-ai-api",
+  "version": "1.0.0",
+  "description": "Gemini AI API Proxy for VetKlinik App",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "gemini-api",
+    "veterinary",
+    "ai-analysis"
+  ],
+  "author": "VetKlinik Team",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.22.1"
+  }
+}
