@@ -1,0 +1,6 @@
+name = "vetklinik-ai-api"
+main = "src/index.js"
+compatibility_date = "2024-01-15"
+
+# Environment variables (set via Cloudflare dashboard)
+# GEMINI_API_KEY - Already configured in Cloudflare
