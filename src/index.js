@@ -16,10 +16,10 @@ export default {
     // Test endpoint
     if (request.method === 'GET') {
       return new Response(JSON.stringify({
-        message: 'VetKlinik AI API çalışıyor! 🐾 (FIXED)',
+        message: 'VetKlinik AI API çalışıyor! 🐾 (UPDATED)',
         status: 'OK',
         timestamp: new Date().toISOString(),
-        version: '1.0.2'
+        version: '1.0.3'
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -30,7 +30,7 @@ export default {
     if (request.method === 'POST') {
       try {
         const body = await request.json();
-        const { notes, petInfo } = body;
+        const { notes, petInfo, action } = body;
 
         if (!notes || !petInfo) {
           return new Response(JSON.stringify({
@@ -41,8 +41,25 @@ export default {
           });
         }
 
-        // Basitleştirilmiş veteriner prompt
-        const prompt = `Sen veteriner hekimsin. Bu hasta hakkında kısa analiz yap:
+        // Action'a göre farklı prompt'lar oluştur
+        let prompt;
+        let maxTokens = 512;
+        
+        if (action === 'summarize') {
+          // ÖZETLEme için basit ve kısa prompt
+          prompt = `Bu veteriner notlarını kısaca özetle:
+
+HASTA: ${petInfo.name} (${petInfo.species})
+
+NOTLAR:
+${notes}
+
+Lütfen bu notları 2-3 cümle ile özetle. Sadece en önemli bilgileri belirt, fazla detay verme.`;
+          
+          maxTokens = 150; // Özetleme için daha az token
+        } else {
+          // ANALİZ için detaylı prompt
+          prompt = `Sen veteriner hekimsin. Bu hasta hakkında kısa analiz yap:
 
 HASTA: ${petInfo.name} (${petInfo.species}, ${petInfo.breed || 'Belirtilmemiş'})
 Yaş: ${petInfo.age || 'Belirtilmemiş'}, Ağırlık: ${petInfo.weight || 'Belirtilmemiş'}kg
@@ -62,6 +79,9 @@ Lütfen kısa analiz yap (maksimum 200 kelime):
 [Kısa öneriler]
 
 UYARI: Bu eğitim amaçlıdır, kesin teşhis değildir.`;
+          
+          maxTokens = 512; // Analiz için daha fazla token
+        }
 
         // Düzeltilmiş Gemini API çağrısı
         const geminiResponse = await fetch(
@@ -81,7 +101,7 @@ UYARI: Bu eğitim amaçlıdır, kesin teşhis değildir.`;
               ],
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 512,
+                maxOutputTokens: maxTokens,
                 topP: 0.8,
                 topK: 40
               },
@@ -123,22 +143,24 @@ UYARI: Bu eğitim amaçlıdır, kesin teşhis değildir.`;
         const analysis = geminiData.candidates[0].content.parts[0].text || 'Analiz yapılamadı';
 
         // Log successful request
-        console.log(`AI Analysis completed for pet: ${petInfo.name} (${petInfo.species})`);
+        const actionText = action === 'summarize' ? 'Summarization' : 'Analysis';
+        console.log(`AI ${actionText} completed for pet: ${petInfo.name} (${petInfo.species})`);
 
         return new Response(JSON.stringify({
           success: true,
           analysis: analysis,
           timestamp: new Date().toISOString(),
-          petName: petInfo.name
+          petName: petInfo.name,
+          action: action || 'analysis'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
       } catch (error) {
-        console.error('AI Analysis Error:', error);
+        console.error('AI Processing Error:', error);
         
-        let userFriendlyError = 'AI analizi sırasında hata oluştu';
+        let userFriendlyError = 'AI işlemi sırasında hata oluştu';
         if (error.message.includes('API error: 429')) {
           userFriendlyError = 'Çok fazla istek gönderildi, lütfen bekleyin';
         } else if (error.message.includes('API error: 403')) {
