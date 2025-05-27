@@ -41,47 +41,12 @@ export default {
           });
         }
 
-        // Action'a göre farklı prompt'lar oluştur
-        let prompt;
-        let maxTokens = 512;
+        // Sadece ilaç tespiti ve açıklama prompt'u
+        const prompt = `Bu veteriner notlarındaki ilaç isimlerini tespit et ve her ilaç adından sonra iki nokta üst üste koyarak ne işe yaradığını yaz. Başka hiçbir cümle kurma:
+
+${notes}`;
         
-        if (action === 'summarize') {
-          // ÖZETLEme için basit ve kısa prompt
-          prompt = `Bu veteriner notlarını kısaca özetle:
-
-HASTA: ${petInfo.name} (${petInfo.species})
-
-NOTLAR:
-${notes}
-
-Lütfen bu notları 2-3 cümle ile özetle. Sadece en önemli bilgileri belirt, fazla detay verme.`;
-          
-          maxTokens = 150; // Özetleme için daha az token
-        } else {
-          // ANALİZ için detaylı prompt
-          prompt = `Sen veteriner hekimsin. Bu hasta hakkında kısa analiz yap:
-
-HASTA: ${petInfo.name} (${petInfo.species}, ${petInfo.breed || 'Belirtilmemiş'})
-Yaş: ${petInfo.age || 'Belirtilmemiş'}, Ağırlık: ${petInfo.weight || 'Belirtilmemiş'}kg
-
-GÖZLEMLER:
-${notes}
-
-Lütfen kısa analiz yap (maksimum 200 kelime):
-
-🔍 BULGULAR:
-[Önemli bulgular]
-
-📊 DEĞERLENDIRME:
-[Genel durum değerlendirmesi]
-
-💡 ÖNERİLER:
-[Kısa öneriler]
-
-UYARI: Bu eğitim amaçlıdır, kesin teşhis değildir.`;
-          
-          maxTokens = 512; // Analiz için daha fazla token
-        }
+        const maxTokens = 200;
 
         // Düzeltilmiş Gemini API çağrısı
         const geminiResponse = await fetch(
